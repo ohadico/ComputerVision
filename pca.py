@@ -88,7 +88,7 @@ def main():
 
     new_points = sk_pca_dim_reduction(points)
 
-    assert np.all(restore_points - new_points < ERROR_TOLERANCE)
+    assert np.all(np.abs(restore_points - new_points) < ERROR_TOLERANCE)
 
 
 def sk_pca_dim_reduction(points):
