@@ -39,13 +39,31 @@ def plt_show_img(img):
     plt.show()
 
 
-def perform_canny_edge_detector(gray_image):
-    edges = cv2.Canny(gray_image, 100, 200)
-    plt.subplot(121), plt.imshow(gray_image, cmap='gray')
-    plt.title('Original Image'), plt.xticks([]), plt.yticks([])
-    plt.subplot(122), plt.imshow(edges, cmap='gray')
-    plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
-    plt.show()
+def get_canny_edges(image_path, out_image_path=None, show_result=False,
+                    low_threshold=100, high_threshold=200, aperture_size=3):
+    print("Perform Canny Edge Detector")
+
+    img = cv2.imread(image_path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    edges = cv2.Canny(gray, low_threshold, high_threshold, aperture_size)
+
+    if out_image_path is not None:
+        cv2.imwrite(out_image_path, edges)
+
+    if show_result:
+        plt.subplot(121)
+        plt.imshow(gray, cmap='gray')
+        plt.title('Original Image')
+        plt.xticks([]), plt.yticks([])
+
+        plt.subplot(122)
+        plt.imshow(edges, cmap='gray')
+        plt.title('Edge Image')
+        plt.xticks([]), plt.yticks([])
+        plt.show()
+
+    return edges
 
 
 def perform_harris_corners(gray, img):
@@ -101,8 +119,7 @@ def match_images(image1_path, image2_path, out_image_path=None, show_result=Fals
 
 def hough_transform(image_path, out_image_path=None, show_result=False, threshold=200):
     img = cv2.imread(image_path)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(gray, 50, 150, apertureSize=3)
+    edges = get_canny_edges(image_path, low_threshold=50, high_threshold=150)
     lines = cv2.HoughLines(edges, 1, np.pi / 180, threshold)
     lines = np.squeeze(lines, axis=1)
 
@@ -130,7 +147,7 @@ def main():
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     gray_float = np.float32(gray)
 
-    perform_canny_edge_detector(gray)
+    get_canny_edges(filename, 'lena_canny.jpg', show_result=True)
 
     corners = perform_harris_corners(gray_float, img)
 
