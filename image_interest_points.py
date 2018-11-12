@@ -66,16 +66,28 @@ def get_canny_edges(image_path, out_image_path=None, show_result=False,
     return edges
 
 
-def perform_harris_corners(gray, img):
-    corners = cv2.cornerHarris(gray, 2, 3, 0.04)
+def get_harris_corners(image_path, out_image_path=None, show_result=False,
+                       block_size=2, k_size=3, k=0.04):
+    print("Perform Harris Corner Detection")
 
-    # result is dilated for marking the corners, not important
-    dst = cv2.dilate(corners, None)
+    img = cv2.imread(image_path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray_float = np.float32(gray)
 
-    # Threshold for an optimal value, it may vary depending on the image.
-    img[dst > 0.01 * dst.max()] = [0, 0, 255]
+    corners = cv2.cornerHarris(gray_float, block_size, k_size, k)
 
-    show_image(img, "Harris Corners", True)
+    if out_image_path is not None or show_result:
+        # result is dilated for marking the corners, not important
+        dst = cv2.dilate(corners, None)
+
+        # Threshold for an optimal value, it may vary depending on the image.
+        img[dst > 0.01 * dst.max()] = [0, 0, 255]
+
+        if out_image_path is not None:
+            cv2.imwrite(out_image_path, img)
+
+        if show_result:
+            show_image(img, "Harris Corners")
 
     return np.array(np.where((corners > 0.01 * corners.max()) == True))
 
@@ -145,11 +157,10 @@ def main():
     filename = 'lena.jpg'
     img = cv2.imread(filename)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gray_float = np.float32(gray)
 
     get_canny_edges(filename, 'lena_canny.jpg', show_result=True)
 
-    corners = perform_harris_corners(gray_float, img)
+    corners = get_harris_corners(filename, 'lena_harris.jpg', show_result=True)
 
     calc_sift(corners, gray)
 
