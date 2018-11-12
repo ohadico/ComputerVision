@@ -73,6 +73,31 @@ def match_images(image1_path, image2_path, out_image_path=None, show_result=Fals
         plt.show()
 
 
+def hough_transform(image_path, out_image_path=None, show_result=False, threshold=200):
+    img = cv2.imread(image_path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray, 50, 150, apertureSize=3)
+    lines = cv2.HoughLines(edges, 1, np.pi / 180, threshold)
+    lines = np.squeeze(lines, axis=1)
+
+    for rho, theta in lines:
+        a = np.cos(theta)
+        b = np.sin(theta)
+        x0 = a * rho
+        y0 = b * rho
+        x1 = int(x0 + 1000 * (-b))
+        y1 = int(y0 + 1000 * (a))
+        x2 = int(x0 - 1000 * (-b))
+        y2 = int(y0 - 1000 * (a))
+        cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+    if show_result:
+        show_image(img)
+
+    if out_image_path is not None:
+        cv2.imwrite(out_image_path, img)
+
+
 def main():
     filename = 'lena.jpg'
     img = cv2.imread(filename)
@@ -86,6 +111,8 @@ def main():
     calc_sift(corners, gray)
 
     match_images('openu1.jpg', 'openu2.jpg', 'openu_matching.jpg', show_result=True, ratio=0.7)
+
+    hough_transform('lions.jpg', 'lions_hough.jpg', show_result=True, threshold=181)
 
 
 if __name__ == '__main__':
