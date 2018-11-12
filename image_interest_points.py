@@ -2,15 +2,41 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
+MAX_WINDOW_HEIGHT = 600
+MAX_WINDOW_WIDTH = 1000
+
 
 def show_image(img, title="image", full_screen=False, wait=True):
+    cv2.namedWindow(title, cv2.WINDOW_NORMAL & cv2.WND_PROP_FULLSCREEN)
+
     if full_screen:
-        cv2.namedWindow(title, cv2.WND_PROP_FULLSCREEN)
         cv2.setWindowProperty(title, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+    else:
+        height, width, channels = img.shape
+
+        window_height = height
+        window_width = width
+
+        if window_height > MAX_WINDOW_HEIGHT:
+            window_width = int(MAX_WINDOW_HEIGHT / float(window_height) * width)
+            window_height = MAX_WINDOW_HEIGHT
+
+        if window_width > MAX_WINDOW_WIDTH:
+            window_height = int(MAX_WINDOW_WIDTH / float(window_width) * height)
+            window_width = MAX_WINDOW_WIDTH
+
+        cv2.resizeWindow(title, window_width, window_height)
+
     cv2.imshow(title, img)
+
     if wait:
         if cv2.waitKey(0) & 0xff == 27:
             cv2.destroyAllWindows()
+
+
+def plt_show_img(img):
+    plt.imshow(img)
+    plt.show()
 
 
 def perform_canny_edge_detector(gray_image):
