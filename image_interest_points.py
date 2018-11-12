@@ -34,11 +34,6 @@ def show_image(img, title="image", full_screen=False, wait=True):
             cv2.destroyAllWindows()
 
 
-def plt_show_img(img):
-    plt.imshow(img)
-    plt.show()
-
-
 def get_canny_edges(image_path, out_image_path=None, show_result=False,
                     low_threshold=100, high_threshold=200, aperture_size=3):
     print("Perform Canny Edge Detector")
@@ -92,17 +87,25 @@ def get_harris_corners(image_path, out_image_path=None, show_result=False,
     return np.array(np.where((corners > 0.01 * corners.max()) == True))
 
 
-def calc_sift(corners, gray):
+def calc_sift(kp_indices, gray, show_result=False):
+    print("Calculate SIFT for each keypoint")
+
     sift = cv2.xfeatures2d.SIFT_create()
-    kp = [cv2.KeyPoint(corners[1, i], corners[0, i], _size=5) for i in xrange(corners.shape[1])]
+    kp = [cv2.KeyPoint(kp_indices[1, i], kp_indices[0, i], _size=5) for i in xrange(kp_indices.shape[1])]
     sift.compute(gray, kp)
-    img = cv2.drawKeypoints(gray, kp, None)
-    show_image(img, "SIFT", True)
+
+    if show_result:
+        img = cv2.drawKeypoints(gray, kp, None)
+        show_image(img, "SIFT")
+
+    return kp
 
 
 def match_images(image1_path, image2_path, out_image_path=None, show_result=False, ratio=0.75):
-    img1 = cv2.imread(image1_path, 0)  # queryImage
-    img2 = cv2.imread(image2_path, 0)  # trainImage
+    print("Matching 2 images")
+
+    img1 = cv2.imread(image1_path, 0)
+    img2 = cv2.imread(image2_path, 0)
 
     # Initiate SIFT detector
     sift = cv2.xfeatures2d.SIFT_create()
@@ -121,15 +124,23 @@ def match_images(image1_path, image2_path, out_image_path=None, show_result=Fals
         if m.distance < ratio * n.distance:
             good.append([m])
 
-    # cv2.drawMatchesKnn expects list of lists as matches.
-    img3 = cv2.drawMatchesKnn(img1, kp1, img2, kp2, good, flags=2, outImg=None)
+    if out_image_path is not None or show_result:
+        # cv2.drawMatchesKnn expects list of lists as matches.
+        img3 = cv2.drawMatchesKnn(img1, kp1, img2, kp2, good, flags=2, outImg=None)
 
-    if show_result:
-        plt.imshow(img3)
-        plt.show()
+        if out_image_path is not None:
+            cv2.imwrite(out_image_path, img3)
+
+        if show_result:
+            plt.imshow(img3)
+            plt.show()
+
+    return good
 
 
 def hough_transform(image_path, out_image_path=None, show_result=False, threshold=200):
+    print("Perform Hough Transform")
+
     img = cv2.imread(image_path)
     edges = get_canny_edges(image_path, low_threshold=50, high_threshold=150)
     lines = cv2.HoughLines(edges, 1, np.pi / 180, threshold)
@@ -147,22 +158,22 @@ def hough_transform(image_path, out_image_path=None, show_result=False, threshol
         cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
     if show_result:
-        show_image(img)
+        show_image(img, "Hough Transform")
 
     if out_image_path is not None:
         cv2.imwrite(out_image_path, img)
 
 
 def main():
-    filename = 'lena.jpg'
-    img = cv2.imread(filename)
+    lena_file = 'lena.jpg'
+
+    get_canny_edges(lena_file, 'lena_canny.jpg', show_result=True)
+
+    corners = get_harris_corners(lena_file, 'lena_harris.jpg', show_result=True)
+
+    img = cv2.imread(lena_file)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-    get_canny_edges(filename, 'lena_canny.jpg', show_result=True)
-
-    corners = get_harris_corners(filename, 'lena_harris.jpg', show_result=True)
-
-    calc_sift(corners, gray)
+    calc_sift(corners, gray, show_result=True)
 
     match_images('openu1.jpg', 'openu2.jpg', 'openu_matching.jpg', show_result=True, ratio=0.7)
 
