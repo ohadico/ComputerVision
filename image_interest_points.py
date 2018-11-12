@@ -44,25 +44,33 @@ def calc_sift(corners, gray):
     show_image(img, "SIFT", True)
 
 
-def match_images():
-    img1 = cv2.imread('openu1.jpg', 0)  # queryImage
-    img2 = cv2.imread('openu2.jpg', 0)  # trainImage
+def match_images(image1_path, image2_path, out_image_path=None, show_result=False, ratio=0.75):
+    img1 = cv2.imread(image1_path, 0)  # queryImage
+    img2 = cv2.imread(image2_path, 0)  # trainImage
+
     # Initiate SIFT detector
     sift = cv2.xfeatures2d.SIFT_create()
+
     # find the keypoints and descriptors with SIFT
     kp1, des1 = sift.detectAndCompute(img1, None)
     kp2, des2 = sift.detectAndCompute(img2, None)
+
     # BFMatcher with default params
     bf = cv2.BFMatcher()
     matches = bf.knnMatch(des1, des2, k=2)
+
     # Apply ratio test
     good = []
     for m, n in matches:
-        if m.distance < 0.7 * n.distance:
+        if m.distance < ratio * n.distance:
             good.append([m])
+
     # cv2.drawMatchesKnn expects list of lists as matches.
     img3 = cv2.drawMatchesKnn(img1, kp1, img2, kp2, good, flags=2, outImg=None)
-    plt.imshow(img3), plt.show()
+
+    if show_result:
+        plt.imshow(img3)
+        plt.show()
 
 
 def main():
@@ -77,7 +85,7 @@ def main():
 
     calc_sift(corners, gray)
 
-    match_images()
+    match_images('openu1.jpg', 'openu2.jpg', 'openu_matching.jpg', show_result=True, ratio=0.7)
 
 
 if __name__ == '__main__':
